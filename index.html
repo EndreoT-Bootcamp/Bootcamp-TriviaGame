@@ -14,13 +14,16 @@
 <body>
     <header class="container">Totally Trivia Game!</header>
     <div class='container'>
-        <div>Time Remaining: <span id="time-remaining"></span><span> seconds</span></div>
+        <div id="time">Time Remaining: <span id="time-remaining">5</span><span> seconds</span></div>
         <div id='question'></div>
         <form id="form">
             <div id='choices'></div>
+
             <input id='submit-choice' class="btn btn-primary" type="button" value="Submit">
         </form>
         <div id='result'></div>
+        <input id='start' class="btn btn-primary" type="button" value="Start Game">
+        <input id='restart' class="btn btn-primary" type="button" value="Restart Game">
     </div>
 
 
@@ -30,31 +33,40 @@
     <script>
 
         const timePerQuestion = 5;
+        const timePerQuestionResult = 3;
         let timer;
         let time = 0;
 
         const questions = [
             {
-                question: 'What is 1 + 1?',
-                choices: [1, 2, 3, 4],
-                correctIndex: 1,
+                question: 'What is 5 + 5?',
+                choices: [1, 2, 3, 10],
+                correctIndex: 3,
             },
             {
-                question: 'What is 2 + 2?',
-                choices: [1, 2, 3, 4],
-                correctIndex: 3,
+                question: 'What is 2 * 2?',
+                choices: [1, 2, 4, 23],
+                correctIndex: 2,
+            },
+            {
+                question: 'What is 3 + 2?',
+                choices: [-23, 4, 2, 6, 4, 5],
+                correctIndex: 5,
             }
         ];
 
         const game = {
-            currentQuestionId: 0,
+            currentQuestionIndex: 0,
+            chosenAnswerIndex: -1,
             correctAnswers: 0,
-            IncorrectAnswers: 0,
+            incorrectAnswers: 0,
             unanswered: 0,
 
             resetGame() {
+                this.currentQuestionIndex = 0;
+                this.chosenAnswerIndex = -1;
                 this.correctAnswers = 0;
-                this.IncorrectAnswers = 0;
+                this.incorrectAnswers = 0;
                 this.unanswered = 0;
             }
         }
@@ -63,13 +75,27 @@
             return 1000 * seconds
         }
 
-
-
         $(document).ready(function () {
 
-            function startTimer() {
+            function startQuestionTimer() {
                 time = timePerQuestion;
                 timer = setInterval(showTime, secondsToMiliseconds(1));
+            }
+
+            function startQuestionResultTimer() {
+                time = timePerQuestionResult;
+                timer = setInterval(function () {
+                    time--;
+                    if (time === 0) {
+                        stopTimer();
+                        if (game.currentQuestionIndex === questions.length) {
+                            endGame();
+                        } else {
+                            showQuestion();
+                        }
+                    }
+                    $('#time-remaining').text(time);
+                }, secondsToMiliseconds(1));
             }
 
             function stopTimer() {
@@ -80,14 +106,15 @@
                 time--;
                 if (time === 0) {
                     stopTimer();
-                    showResult()
+                    showResult();
                 }
                 $('#time-remaining').text(time);
             }
 
             function showQuestion() {
-
-                const question = questions[game.currentQuestionId];
+                let index = 0;
+                clearHtml();
+                const question = questions[game.currentQuestionIndex];
                 $('#question').html(question.question);
 
                 question.choices.forEach(item => {
@@ -96,45 +123,112 @@
                         .addClass('form-check-input')
                         .attr('type', 'radio')
                         .attr('name', 'choice')
-                        .attr('value', item)
+                        .attr('value', index)
                         .prop('required', true)
                     const label = $('<label>').addClass('form-check-label').text(item);
 
                     choice.append(input).append(label)
                     $('#choices').append(choice);
+                    index++;
                 });
-                startTimer();
+                startQuestionTimer();
                 $('#submit-choice').show()
             }
 
-            function showResult() {
+            function clearHtml() {
+                $('#result').empty();
                 $('#question').empty();
                 $('#choices').empty();
-                $('#submit-choice').hide()
-                const message = $('<h2>');
-                if (time === 0) {
-                    message.text('Out of time!');
-                    const correctAnswer = $('<h2>');
-                    const question =  questions[game.currentQuestionId];
-                    correctAnswer.text('The correct answer is ' + question.choices[question.correctIndex])
-                    $('#result').append(message).append(correctAnswer)
-                } else {
-                    console.log("You chose value " + $("input[name='choice']:checked").val());
+                $('#submit-choice').hide();
+            }
+
+            function showResult() {
+                stopTimer();
+                $('#time-remaining').text(timePerQuestionResult);
+                clearHtml();
+
+                const messageElement = $('<h2>');
+                const correctAnswerElement = $('<h2>');
+
+                const currentQuestionIndex = game.currentQuestionIndex;
+                const question = questions[currentQuestionIndex];
+                const correctAnswerIndex = question.correctIndex
+                const correctAnswer = question.choices[correctAnswerIndex]
+                const chosenAnswerIndex = game.chosenAnswerIndex
+
+                if (time === 0) { // Time ran out, no answer submitted
+                    messageElement.text('Out of time!');
+                    correctAnswerElement.text('The correct answer is ' + correctAnswer)
+                    game.unanswered++;
+                } else { // Answer submitted
+                    if (correctAnswerIndex === chosenAnswerIndex) { // Answer is correct
+                        messageElement.text("Correct!")
+                        correctAnswerElement.text("You correctly chose value " + correctAnswer);
+                        game.correctAnswers++;
+                    } else { // Answer is incorrect
+                        messageElement.text('Wrong!');
+                        correctAnswerElement.text("The correct answer is " + correctAnswer);
+                        game.incorrectAnswers++;
+                    }
                 }
+                $('#result').append(messageElement).append(correctAnswerElement);
+
+                game.currentQuestionIndex++;
+                startQuestionResultTimer();
+            }
+
+            function endGame() {
+                clearHtml();
+                $('#restart').show();
+                let correctAnswerElement = $('<p>')
+                let incorrectAnswerElement = $('<p>')
+                let unansweredElement = $('<p>')
+
+                correctAnswerElement.text('Correct answers: ' + game.correctAnswers)
+                incorrectAnswerElement.text('Incorrect answers: ' + game.incorrectAnswers)
+                unansweredElement.text('Unanswered questions: ' + game.unanswered)
+
+                $('#result')
+                    .append('<h2>End of game score!</h2>')
+                    .append(correctAnswerElement)
+                    .append(incorrectAnswerElement)
+                    .append(unansweredElement);
             }
 
             $('#submit-choice').click(function () {
-                if (!$("input[name='choice']:checked").val()) {
-                    console.log("you must make a selection")
+                const index = $("input[name='choice']:checked").val();
+                if (!index) { // No choice selected
+                    if (!$('#warn').length) {
+                        let warningDiv = $('<div id="warn" class="alert alert-warning" role="alert">You must make a selection before submitting!</div>');
+                        $('#result').append(warningDiv);
+                    }      
                 } else {
+                    // console.log($("input[name='choice']:checked").val())
+                    $('#warn').remove();
+                    game.chosenAnswerIndex = parseInt(index);
                     stopTimer();
                     showResult();
-
                 }
-
             });
 
-            showQuestion();
+            $('#start').click(function () {
+                $('#start').hide();
+                $('#time').show()
+                showQuestion();
+            });
+
+            $('#restart').click(function () {
+                $('#restart').hide();
+                game.resetGame();
+                showQuestion();
+            });
+
+            function main() {
+                $('#submit-choice').hide();
+                $('#time').hide();
+                $('#restart').hide();
+            }
+            main();
         });
 
     </script>
