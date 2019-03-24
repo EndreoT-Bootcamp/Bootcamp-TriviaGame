@@ -8,232 +8,39 @@
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="./assets/css/style.css">
     <title>Trivia Game</title>
 </head>
 
 <body>
-    <header class="container">Totally Trivia Game!</header>
-    <div class='container'>
-        <div id="time">Time Remaining: <span id="time-remaining">5</span><span> seconds</span></div>
-        <div id='question'></div>
-        <form id="form">
-            <div id='choices'></div>
+    <div class="container" id="game-content">
+        <header class="container text-center">
+            <p>Trivia questions attribution source - <a href="http://laffgaff.com/science-trivia-questions-answers/"
+                    target="_blank">laffgaff.com</a></p>
+            <h1 id="title">Totally Trivia Game!</h1>
+        </header>
 
-            <input id='submit-choice' class="btn btn-primary" type="button" value="Submit">
-        </form>
-        <div id='result'></div>
-        <input id='start' class="btn btn-primary" type="button" value="Start Game">
-        <input id='restart' class="btn btn-primary" type="button" value="Restart Game">
+        <div class='container' id="game-display">
+
+            <div id="time">Time Remaining: <span id="time-remaining">10</span><span> seconds</span></div>
+            <div id='question'></div>
+            <form id="form">
+                <div id='choices'></div>
+                <input id='submit-choice' class="btn btn-primary" type="button" value="Submit">
+            </form>
+            <div id='result'></div>
+        </div>
+        <div class="container text-center" id="game-buttons">
+            <input id='start' class="btn btn-primary btn-lg" type="button" value="Start Game">
+            <input id='restart' class="btn btn-primary btn-lg" type="button" value="Restart Game">
+        </div>
     </div>
-
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
         crossorigin="anonymous"></script>
-    <script>
 
-        const timePerQuestion = 5;
-        const timePerQuestionResult = 3;
-        let timer;
-        let time = 0;
-
-        const questions = [
-            {
-                question: 'What is 5 + 5?',
-                choices: [1, 2, 3, 10],
-                correctIndex: 3,
-            },
-            {
-                question: 'What is 2 * 2?',
-                choices: [1, 2, 4, 23],
-                correctIndex: 2,
-            },
-            {
-                question: 'What is 3 + 2?',
-                choices: [-23, 4, 2, 6, 4, 5],
-                correctIndex: 5,
-            }
-        ];
-
-        const game = {
-            currentQuestionIndex: 0,
-            chosenAnswerIndex: -1,
-            correctAnswers: 0,
-            incorrectAnswers: 0,
-            unanswered: 0,
-
-            resetGame() {
-                this.currentQuestionIndex = 0;
-                this.chosenAnswerIndex = -1;
-                this.correctAnswers = 0;
-                this.incorrectAnswers = 0;
-                this.unanswered = 0;
-            }
-        }
-
-        function secondsToMiliseconds(seconds) {
-            return 1000 * seconds
-        }
-
-        $(document).ready(function () {
-
-            function startQuestionTimer() {
-                time = timePerQuestion;
-                timer = setInterval(showTime, secondsToMiliseconds(1));
-            }
-
-            function startQuestionResultTimer() {
-                time = timePerQuestionResult;
-                timer = setInterval(function () {
-                    time--;
-                    if (time === 0) {
-                        stopTimer();
-                        if (game.currentQuestionIndex === questions.length) {
-                            endGame();
-                        } else {
-                            showQuestion();
-                        }
-                    }
-                    $('#time-remaining').text(time);
-                }, secondsToMiliseconds(1));
-            }
-
-            function stopTimer() {
-                clearTimeout(timer);
-            }
-
-            function showTime() {
-                time--;
-                if (time === 0) {
-                    stopTimer();
-                    showResult();
-                }
-                $('#time-remaining').text(time);
-            }
-
-            function showQuestion() {
-                let index = 0;
-                clearHtml();
-                const question = questions[game.currentQuestionIndex];
-                $('#question').html(question.question);
-
-                question.choices.forEach(item => {
-                    const choice = $('<div>').addClass('form-check');
-                    const input = $('<input>')
-                        .addClass('form-check-input')
-                        .attr('type', 'radio')
-                        .attr('name', 'choice')
-                        .attr('value', index)
-                        .prop('required', true)
-                    const label = $('<label>').addClass('form-check-label').text(item);
-
-                    choice.append(input).append(label)
-                    $('#choices').append(choice);
-                    index++;
-                });
-                startQuestionTimer();
-                $('#submit-choice').show()
-            }
-
-            function clearHtml() {
-                $('#result').empty();
-                $('#question').empty();
-                $('#choices').empty();
-                $('#submit-choice').hide();
-            }
-
-            function showResult() {
-                stopTimer();
-                $('#time-remaining').text(timePerQuestionResult);
-                clearHtml();
-
-                const messageElement = $('<h2>');
-                const correctAnswerElement = $('<h2>');
-
-                const currentQuestionIndex = game.currentQuestionIndex;
-                const question = questions[currentQuestionIndex];
-                const correctAnswerIndex = question.correctIndex
-                const correctAnswer = question.choices[correctAnswerIndex]
-                const chosenAnswerIndex = game.chosenAnswerIndex
-
-                if (time === 0) { // Time ran out, no answer submitted
-                    messageElement.text('Out of time!');
-                    correctAnswerElement.text('The correct answer is ' + correctAnswer)
-                    game.unanswered++;
-                } else { // Answer submitted
-                    if (correctAnswerIndex === chosenAnswerIndex) { // Answer is correct
-                        messageElement.text("Correct!")
-                        correctAnswerElement.text("You correctly chose value " + correctAnswer);
-                        game.correctAnswers++;
-                    } else { // Answer is incorrect
-                        messageElement.text('Wrong!');
-                        correctAnswerElement.text("The correct answer is " + correctAnswer);
-                        game.incorrectAnswers++;
-                    }
-                }
-                $('#result').append(messageElement).append(correctAnswerElement);
-
-                game.currentQuestionIndex++;
-                startQuestionResultTimer();
-            }
-
-            function endGame() {
-                clearHtml();
-                $('#restart').show();
-                let correctAnswerElement = $('<p>')
-                let incorrectAnswerElement = $('<p>')
-                let unansweredElement = $('<p>')
-
-                correctAnswerElement.text('Correct answers: ' + game.correctAnswers)
-                incorrectAnswerElement.text('Incorrect answers: ' + game.incorrectAnswers)
-                unansweredElement.text('Unanswered questions: ' + game.unanswered)
-
-                $('#result')
-                    .append('<h2>End of game score!</h2>')
-                    .append(correctAnswerElement)
-                    .append(incorrectAnswerElement)
-                    .append(unansweredElement);
-            }
-
-            $('#submit-choice').click(function () {
-                const index = $("input[name='choice']:checked").val();
-                if (!index) { // No choice selected
-                    if (!$('#warn').length) {
-                        let warningDiv = $('<div id="warn" class="alert alert-warning" role="alert">You must make a selection before submitting!</div>');
-                        $('#result').append(warningDiv);
-                    }      
-                } else {
-                    // console.log($("input[name='choice']:checked").val())
-                    $('#warn').remove();
-                    game.chosenAnswerIndex = parseInt(index);
-                    stopTimer();
-                    showResult();
-                }
-            });
-
-            $('#start').click(function () {
-                $('#start').hide();
-                $('#time').show()
-                showQuestion();
-            });
-
-            $('#restart').click(function () {
-                $('#restart').hide();
-                game.resetGame();
-                showQuestion();
-            });
-
-            function main() {
-                $('#submit-choice').hide();
-                $('#time').hide();
-                $('#restart').hide();
-            }
-            main();
-        });
-
-    </script>
-
-    <!-- <script src='./assets/javascript/app.js'></script> -->
+    <script src='./assets/javascript/app.js'></script>
 
 </body>
 
