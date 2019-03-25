@@ -36,7 +36,7 @@ const questions = [
     },
 
     {
-        question: 'Which of these is not found in the nucleus?',
+        question: "Which of these is not found in an atom's nucleus?",
         choices: ['Proton', 'Neutron', 'Electron'],
         correctIndex: 2,
     },
@@ -64,7 +64,7 @@ const game = {
 }
 
 function secondsToMiliseconds(seconds) {
-    return 1000 * seconds
+    return 1000 * seconds;
 }
 
 $(document).ready(function () {
@@ -74,7 +74,7 @@ $(document).ready(function () {
         timer = setInterval(showTime, secondsToMiliseconds(1));
     }
 
-    // Post question result timer
+    // Result timer during post question section
     function startQuestionResultTimer() {
         time = timePerQuestionResult;
         timer = setInterval(function () {
@@ -107,6 +107,8 @@ $(document).ready(function () {
     function showQuestion() {
         let index = 0;
         clearHtml();
+        $('#question-number-section').show();
+        $('#question-number').text(game.currentQuestionIndex + 1);
         const question = questions[game.currentQuestionIndex];
         $('#question').html(question.question);
 
@@ -136,6 +138,7 @@ $(document).ready(function () {
     }
 
     function showResult() {
+        $('#question-number-section').hide();
         stopTimer();
         $('#time-remaining').text(timePerQuestionResult);
         clearHtml();
@@ -170,15 +173,16 @@ $(document).ready(function () {
 
     // End of game results
     function endGame() {
+        $('#question-number-section').hide();
         clearHtml();
         $('#restart').show();
-        let correctAnswerElement = $('<p>')
-        let incorrectAnswerElement = $('<p>')
-        let unansweredElement = $('<p>')
+        let correctAnswerElement = $('<p>');
+        let incorrectAnswerElement = $('<p>');
+        let unansweredElement = $('<p>');
 
-        correctAnswerElement.text('Correct answers: ' + game.correctAnswers)
-        incorrectAnswerElement.text('Incorrect answers: ' + game.incorrectAnswers)
-        unansweredElement.text('Unanswered questions: ' + game.unanswered)
+        correctAnswerElement.text('Correct answers: ' + game.correctAnswers);
+        incorrectAnswerElement.text('Incorrect answers: ' + game.incorrectAnswers);
+        unansweredElement.text('Unanswered questions: ' + game.unanswered);
 
         $('#result')
             .append('<h2>End of game score!</h2>')
@@ -205,7 +209,8 @@ $(document).ready(function () {
     // Functionality for start button
     $('#start').click(function () {
         $('#start').hide();
-        $('#time').show()
+        $('#time').show();
+        $('#question-number-section').show();
         showQuestion();
     });
 
@@ -217,6 +222,7 @@ $(document).ready(function () {
     });
 
     function main() {
+        $('#question-number-section').hide();
         $('#submit-choice').hide();
         $('#time').hide();
         $('#restart').hide();
